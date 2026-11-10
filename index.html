@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Slider</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box
+}
+body{
+    background:#f2f2f2;
+    display:flex;
+    justify-content:center;
+    padding:20px
+}
+.container{
+    max-width:1100px;
+    width:100%;
+    position:relative
+}
+.slider-wrapper{
+    position:relative
+}
+.slide-button{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  height:45px;width:45px;
+  background:#000;color:#fff;
+  border:none;
+  border-radius:50%;
+  font-size:20px;
+  cursor:pointer;
+  z-index:10;
+}
+#prev-slide{
+    left:-10px;
+    display:none
+}
+#next-slide{
+    right:-10px
+}
+.image-list{
+  display:flex;
+  gap:15px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  list-style:none;
+  scroll-behavior:smooth;
+}
+.image-list::-webkit-scrollbar{
+    display:none
+}
+.image-item{
+    width:280px;
+    height:340px;
+    object-fit:cover;
+    border-radius:10px;
+    flex-shrink:0
+}
+.slider-scrollbar{
+    height:6px;
+    width:100%;
+    background:#ddd;
+    margin-top:18px;
+    border-radius:10px;
+    position:relative;
+    cursor:pointer
+}
+.scrollbar-thumb{
+  position:absolute;
+  top:0;
+  left:0;
+  height:100%;
+  width:25%;
+  background:#000;
+  border-radius:10px;
+  cursor:grab;
+}
+.scrollbar-thumb:active{
+    cursor:grabbing
+}
+@media(max-width:600px){
+    .image-item{
+        width:200px;
+        height:260px
+        }
+        }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="slider-wrapper">
+    <button id="prev-slide" class="slide-button">&#10094;</button>
+    <ul class="image-list" id="imageList">
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1567016432779-094069958ea5?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600"></li>
+      <li><img class="image-item" src="https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=600"></li>
+    </ul>
+    <button id="next-slide" class="slide-button">&#10095;</button>
+  </div>
+  <div class="slider-scrollbar" id="scrollbar">
+    <div class="scrollbar-thumb" id="thumb"></div>
+  </div>
+</div>
+
+<script>
+const list = document.getElementById("imageList");
+const scrollbar = document.getElementById("scrollbar");
+const thumb = document.getElementById("thumb");
+const prevBtn = document.getElementById("prev-slide");
+const nextBtn = document.getElementById("next-slide");
+
+function getMaxScroll(){ return list.scrollWidth - list.clientWidth; }
+function getMaxThumb(){ return scrollbar.clientWidth - thumb.offsetWidth; }
+
+function updateThumb(){
+  const ratio = list.scrollLeft / getMaxScroll();
+  thumb.style.left = (ratio * getMaxThumb()) + "px";
+  prevBtn.style.display = list.scrollLeft <= 5 ? "none" : "block";
+  nextBtn.style.display = list.scrollLeft >= getMaxScroll()-5 ? "none" : "block";
+}
+
+list.addEventListener("scroll", updateThumb);
+window.addEventListener("resize", updateThumb);
+
+// 1. BUTTON SE AAGE PICHE
+prevBtn.onclick = () => list.scrollBy({left: -list.clientWidth, behavior:"smooth"});
+nextBtn.onclick = () => list.scrollBy({left: list.clientWidth, behavior:"smooth"});
+
+// 2. LINE PE CLICK KARKE AAGE PICHE
+scrollbar.addEventListener("click", (e) => {
+  if(e.target === thumb) return;
+  const clickX = e.clientX - scrollbar.getBoundingClientRect().left;
+  const ratio = clickX / scrollbar.clientWidth;
+  list.scrollTo({left: ratio * getMaxScroll(), behavior:"smooth"});
+});
+
+// 3. LINE KE THUMB KO PAKAD KE DRAG KARKE AAGE PICHE
+let isDragging = false, startX, startLeft;
+thumb.addEventListener("mousedown", (e) => {
+  isDragging = true; startX = e.clientX; startLeft = thumb.offsetLeft;
+  e.preventDefault();
+});
+document.addEventListener("mousemove", (e) => {
+  if(!isDragging) return;
+  let newLeft = startLeft + (e.clientX - startX);
+  newLeft = Math.max(0, Math.min(getMaxThumb(), newLeft));
+  thumb.style.left = newLeft + "px";
+  list.scrollLeft = (newLeft / getMaxThumb()) * getMaxScroll();
+});
+document.addEventListener("mouseup", () => isDragging = false);
+
+// Mobile ke liye touch
+thumb.addEventListener("touchstart", (e) => {
+  isDragging = true; startX = e.touches[0].clientX; startLeft = thumb.offsetLeft;
+});
+document.addEventListener("touchmove", (e) => {
+  if(!isDragging) return;
+  let newLeft = startLeft + (e.touches[0].clientX - startX);
+  newLeft = Math.max(0, Math.min(getMaxThumb(), newLeft));
+  thumb.style.left = newLeft + "px";
+  list.scrollLeft = (newLeft / getMaxThumb()) * getMaxScroll();
+});
+document.addEventListener("touchend", () => isDragging = false);
+
+updateThumb();
+</script>
+</body>
+</html>
